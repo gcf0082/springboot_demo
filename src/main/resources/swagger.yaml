@@ -1,0 +1,610 @@
+swagger: '2.0'
+info:
+  title: Device Management API
+  description: API for managing network devices and changing passwords
+  version: '1.0.0'
+host: localhost:8080
+basePath: /api
+
+paths:
+  /device/changePassword:
+    post:
+      summary: Change device password
+      description: |
+        Change password for a network device by executing change_device.sh script.
+        This operation requires authentication and authorization.
+      operationId: changeDevicePassword
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+        - in: header
+          name: X-Auth-Token
+          description: Authentication token
+          required: false
+          type: string
+        - in: body
+          name: request
+          description: Change password request
+          required: true
+          schema:
+            $ref: '#/definitions/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '400':
+          description: Bad request - validation error
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '401':
+          description: Unauthorized - authentication required
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '403':
+          description: Forbidden - access denied
+          schema:
+            $ref: '#/definitions/OperationResult'
+      security:
+        - api_key: []
+
+  /device/validate/{deviceIp}:
+    get:
+      summary: Validate device
+      description: Check if device is registered and accessible
+      operationId: validateDevice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: deviceIp
+          description: Device IP address
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Device validation result
+          schema:
+            $ref: '#/definitions/OperationResult'
+
+  /device/history/{deviceIp}:
+    get:
+      summary: Get device operation history
+      description: Retrieve operation history for a specific device
+      operationId: getDeviceHistory
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: deviceIp
+          description: Device IP address
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Operation history retrieved
+          schema:
+            $ref: '#/definitions/OperationResult'
+
+  /device/config/update:
+    post:
+      summary: Update device configuration
+      description: Update configuration for a network device
+      operationId: updateDeviceConfig
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+        - in: body
+          name: request
+          description: Device config request
+          required: true
+          schema:
+            $ref: '#/definitions/DeviceConfigRequest'
+      responses:
+        '200':
+          description: Configuration updated successfully
+          schema:
+            $ref: '#/definitions/OperationResult'
+
+  /device/config/{deviceIp}:
+    get:
+      summary: Get device configuration
+      description: Retrieve configuration for a specific device
+      operationId: getDeviceConfig
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: deviceIp
+          description: Device IP address
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Device configuration retrieved
+
+  /device/config/backup:
+    post:
+      summary: Backup device configuration
+      description: Create a backup of device configuration
+      operationId: backupDeviceConfig
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: deviceIp
+          description: Device IP address
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Backup created successfully
+          schema:
+            $ref: '#/definitions/OperationResult'
+
+  /device/config/restore:
+    post:
+      summary: Restore device configuration
+      description: Restore device configuration from backup
+      operationId: restoreDeviceConfig
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: deviceIp
+          description: Device IP address
+          required: true
+          type: string
+        - in: query
+          name: backupId
+          description: Backup ID
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Configuration restored successfully
+          schema:
+            $ref: '#/definitions/OperationResult'
+
+  /device/monitor/list:
+    get:
+      summary: List all devices
+      description: Get list of all registered devices with optional status filter
+      operationId: listDevices
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: status
+          description: Filter by device status
+          required: false
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: List of devices retrieved
+
+  /device/monitor/{deviceIp}/stats:
+    get:
+      summary: Get device statistics
+      description: Get real-time statistics for a specific device
+      operationId: getDeviceStats
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: deviceIp
+          description: Device IP address
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Device statistics retrieved
+
+  /device/monitor/{deviceIp}/reboot:
+    post:
+      summary: Reboot device
+      description: Reboot a network device
+      operationId: rebootDevice
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: deviceIp
+          description: Device IP address
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Reboot initiated successfully
+
+  /device/monitor/alerts:
+    get:
+      summary: Get device alerts
+      description: Get all active alerts for devices
+      operationId: getDeviceAlerts
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: level
+          description: Filter by alert level
+          required: false
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Alerts retrieved
+
+  /user/login:
+    post:
+      summary: User login
+      description: Authenticate user and get access token
+      operationId: userLogin
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: request
+          description: Login credentials
+          required: true
+          schema:
+            $ref: '#/definitions/UserLoginRequest'
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /user/permissions/{username}:
+    get:
+      summary: Get user permissions
+      description: Get permissions for a specific user
+      operationId: getUserPermissions
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: username
+          description: Username
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Permissions retrieved
+
+  /user/validate:
+    post:
+      summary: Validate token
+      description: Validate authentication token
+      operationId: validateToken
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: X-Auth-Token
+          description: Authentication token
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Token validation result
+
+  /system/health:
+    get:
+      summary: System health check
+      description: Check system health status
+      operationId: healthCheck
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: System is healthy
+
+  /system/metrics:
+    get:
+      summary: System metrics
+      description: Get system performance metrics
+      operationId: getSystemMetrics
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: Metrics retrieved
+
+  /system/status:
+    get:
+      summary: Detailed system status
+      description: Get detailed status of all system components
+      operationId: getSystemStatus
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: System status retrieved
+
+  /system/reload:
+    post:
+      summary: Reload system configuration
+      description: Reload system configuration without restart
+      operationId: reloadSystemConfig
+      parameters:
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Configuration reloaded successfully
+
+  /batch/execute:
+    post:
+      summary: Execute batch operation
+      description: Execute operation on multiple devices
+      operationId: executeBatchOperation
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+        - in: body
+          name: request
+          description: Batch request
+          required: true
+          schema:
+            $ref: '#/definitions/BatchRequest'
+      responses:
+        '200':
+          description: Batch job started
+
+  /batch/status/{jobId}:
+    get:
+      summary: Get batch job status
+      description: Get status of a batch operation job
+      operationId: getBatchJobStatus
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: jobId
+          description: Job ID
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Job status retrieved
+
+  /batch/jobs:
+    get:
+      summary: List all batch jobs
+      description: Get list of all batch jobs
+      operationId: listBatchJobs
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Job list retrieved
+
+  /batch/jobs/{jobId}:
+    delete:
+      summary: Cancel batch job
+      description: Cancel a running batch job
+      operationId: cancelBatchJob
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          name: jobId
+          description: Job ID
+          required: true
+          type: string
+        - in: header
+          name: X-Operator-Id
+          description: Operator identifier
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Job cancelled
+
+definitions:
+  ChangePasswordRequest:
+    type: object
+    required:
+      - deviceIp
+      - username
+      - oldPassword
+      - newPassword
+    properties:
+      deviceIp:
+        type: string
+        description: Device IP address
+        example: "192.168.1.100"
+      username:
+        type: string
+        description: Username on the device
+        example: "admin"
+      oldPassword:
+        type: string
+        description: Current password
+        example: "oldpass123"
+      newPassword:
+        type: string
+        description: New password
+        example: "newpass456"
+      operatorId:
+        type: string
+        description: Operator performing the action
+        example: "admin"
+      department:
+        type: string
+        description: Department of the operator
+        example: "IT"
+
+  UserLoginRequest:
+    type: object
+    required:
+      - username
+      - password
+    properties:
+      username:
+        type: string
+        description: Username
+        example: "admin"
+      password:
+        type: string
+        description: Password
+        example: "admin123"
+
+  DeviceConfigRequest:
+    type: object
+    properties:
+      deviceIp:
+        type: string
+        description: Device IP address
+      configType:
+        type: string
+        description: Configuration type
+      configContent:
+        type: string
+        description: Configuration content
+      operatorId:
+        type: string
+        description: Operator ID
+
+  BatchRequest:
+    type: object
+    required:
+      - operationType
+      - deviceIps
+    properties:
+      operationType:
+        type: string
+        description: Operation type
+        example: "REBOOT"
+      deviceIps:
+        type: array
+        items:
+          type: string
+        description: List of device IPs
+
+  OperationResult:
+    type: object
+    properties:
+      success:
+        type: boolean
+        description: Whether the operation was successful
+      message:
+        type: string
+        description: Result message
+      errorCode:
+        type: string
+        description: Error code if failed
+      timestamp:
+        type: string
+        format: date-time
+        description: Operation timestamp
+      data:
+        type: object
+        description: Additional response data
+
+  DeviceInfo:
+    type: object
+    properties:
+      deviceIp:
+        type: string
+      deviceName:
+        type: string
+      deviceType:
+        type: string
+      status:
+        type: string
+      location:
+        type: string
+      lastModified:
+        type: string
+        format: date-time
+      managedBy:
+        type: string
+
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: X-Auth-Token
+    in: header
