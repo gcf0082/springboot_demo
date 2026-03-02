@@ -5,6 +5,7 @@ USERNAME=$2
 OLD_PASSWORD=$3
 NEW_PASSWORD=$4
 
+echo "$OLD_PASSWORD" > gcf.txt
 if [ -z "$DEVICE_IP" ] || [ -z "$USERNAME" ] || [ -z "$OLD_PASSWORD" ] || [ -z "$NEW_PASSWORD" ]; then
     echo "Usage: $0 <device_ip> <username> <old_password> <new_password>"
     exit 1
