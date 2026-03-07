@@ -1,44 +1,27 @@
 package com.weihua.util;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.util.Arrays;
 
 @Component
 public class ScriptExecutor {
     
-    private static final String SCRIPT_PATH = "change_device.sh";
+    private static final String SCRIPT_PATH = "/opt/change_device.sh";
     private static final int SCRIPT_TIMEOUT = 30000;
+    
+    private final CommandExecutor commandExecutor;
+    
+    @Autowired
+    public ScriptExecutor(CommandExecutor commandExecutor) {
+        this.commandExecutor = commandExecutor;
+    }
     
     public ScriptExecutionResult executeChangePasswordScript(String deviceIp, String username, 
                                                             String oldPassword, String newPassword) {
         String[] command = buildCommand(deviceIp, username, oldPassword, newPassword);
         
-        try {
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-            processBuilder.redirectErrorStream(true);
-            Process process = processBuilder.start();
-            
-            StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    output.append(line).append("\n");
-                }
-            }
-            
-            int exitCode = process.waitFor();
-            
-            return new ScriptExecutionResult(exitCode == 0, exitCode, output.toString());
-            
-        } catch (IOException e) {
-            return new ScriptExecutionResult(false, -1, "Script execution failed: " + e.getMessage());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new ScriptExecutionResult(false, -1, "Script execution interrupted");
-        }
+        CommandExecutor.CommandResult result = commandExecutor.execute(command);
+        return new ScriptExecutionResult(result.isSuccess(), result.getExitCode(), result.getOutput());
     }
     
     private String[] buildCommand(String deviceIp, String username, String oldPassword, String newPassword) {
@@ -53,13 +36,8 @@ public class ScriptExecutor {
     }
     
     public boolean validateScriptExists() {
-        try {
-            ProcessBuilder pb = new ProcessBuilder("test", "-f", SCRIPT_PATH);
-            Process p = pb.start();
-            return p.waitFor() == 0;
-        } catch (Exception e) {
-            return false;
-        }
+        CommandExecutor.CommandResult result = commandExecutor.execute(new String[]{"test", "-f", SCRIPT_PATH});
+        return result.getExitCode() == 0;
     }
     
     public static class ScriptExecutionResult {
